@@ -1,15 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:sae_flutter/widget/bottom_bar.dart';
-import 'package:shimmer/shimmer.dart';
 
-import 'game_details.dart';
+import '../widget/card_game.dart';
 
 class GameListPage extends StatefulWidget {
-  const GameListPage({Key? key}) : super(key: key);
+  const GameListPage({super.key});
 
   @override
   _GameListPageState createState() => _GameListPageState();
@@ -64,6 +61,9 @@ class _GameListPageState extends State<GameListPage> {
       });
     }
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -147,7 +147,7 @@ class _GameListPageState extends State<GameListPage> {
             child: MasonryGridView.count(
               controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              crossAxisCount: 2,  // Number of columns
+              crossAxisCount: 2, // Number of columns
               itemCount: games.length + (isLoading ? 2 : 0),
               itemBuilder: (context, index) {
                 if (index < games.length) {
@@ -190,260 +190,6 @@ class _GameListPageState extends State<GameListPage> {
               child: CircularProgressIndicator(),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class GameCard extends StatelessWidget {
-  final String gameId;
-  final String title;
-  final String imageUrl;
-  final String genres;
-  final bool isLargeCard;
-  final double rating; // Add rating field
-  final List<String> platforms; // Add platforms field
-  final dynamic game;
-
-  const GameCard({
-    required this.gameId,
-    required this.game,
-    required this.title,
-    required this.imageUrl,
-    required this.genres,
-    required this.rating, // Initialize rating
-    required this.platforms, // Initialize platforms
-    this.isLargeCard = false, // Default to false
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => GameDetailPage(
-              gameId: gameId,
-            ),
-          ),
-        );
-      },
-    child: Card(
-      color: const Color(0xFF2C2C2C),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.0),
-      ),
-      elevation: 6,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AspectRatio(
-            aspectRatio: isLargeCard ? 16 / 10 : 16 / 9,
-            child: Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16.0),
-                    topRight: Radius.circular(16.0),
-                  ),
-                  child: Image.network(
-                    imageUrl,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    alignment: Alignment.center,
-                  ),
-                ),
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.7),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Row(
-                    children: _buildPlatformIcons(platforms), // Show platform icons
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: isLargeCard ? 3 : 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                // Shorten genres if needed
-                Text(
-                  'Genres: ${_shortenGenres(genres)}',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.star, color: Colors.amber, size: 16), // Star icon for rating
-                    const SizedBox(width: 4),
-                    Text(
-                      rating.toString(),
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.center,
-                  child: IconButton(
-                    icon: const Icon(Icons.favorite_border, color: Colors.white),
-                    onPressed: () {},
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-    );
-  }
-
-  // Function to build platform icons
-  List<Widget> _buildPlatformIcons(List<String> platforms) {
-    List<Widget> platformIcons = [];
-
-    for (int i = 0; i < platforms.length; i++) {
-      if (i >= 4) { // Show a "more" icon if there are more than 3 platforms
-        platformIcons.add(const Icon(Icons.more_horiz, color: Colors.white, size: 20));
-        break;
-      }
-
-      switch (platforms[i]) {
-        case 'PlayStation 4':
-          platformIcons.add(const Icon(FontAwesomeIcons.playstation, color: Colors.white, size: 20));
-          break;
-        case 'PlayStation 5':
-          platformIcons.add(const Icon(FontAwesomeIcons.playstation, color: Colors.white, size: 20));
-          break;
-        case 'Xbox One':
-          platformIcons.add(const Icon(FontAwesomeIcons.xbox, color: Colors.white, size: 20));
-          break;
-        case 'Xbox Series S/X':
-          platformIcons.add(const Icon(FontAwesomeIcons.xbox, color: Colors.white, size: 20));
-          break;
-        case 'PC':
-          platformIcons.add(const Icon(FontAwesomeIcons.windows, color: Colors.white, size: 20));
-          break;
-        case 'Nintendo Switch':
-          platformIcons.add(const Icon(FontAwesomeIcons.gamepad, color: Colors.white, size: 20));
-          break;
-        case 'Nintendo 3DS':
-          platformIcons.add(const Icon(FontAwesomeIcons.gamepad, color: Colors.white, size: 20));
-          break;
-        case 'Nintendo DS':
-          platformIcons.add(const Icon(FontAwesomeIcons.gamepad, color: Colors.white, size: 20));
-          break;
-        case 'Nintendo DSi':
-          platformIcons.add(const Icon(FontAwesomeIcons.gamepad, color: Colors.white, size: 20));
-          break;
-        case 'macOS':
-          platformIcons.add(const Icon(FontAwesomeIcons.computer, color: Colors.white, size: 20));
-          break;
-        case 'Android':
-          platformIcons.add(const Icon(FontAwesomeIcons.android, color: Colors.white, size: 20));
-          break;
-        case 'iOS':
-          platformIcons.add(const Icon(FontAwesomeIcons.apple, color: Colors.white, size: 20));
-          break;
-      // Add more cases for other platforms if needed
-        default:
-          platformIcons.add(const Icon(Icons.devices_other, color: Colors.white, size: 20));
-      }
-    }
-
-    return platformIcons;
-  }
-
-  // Function to shorten the genres string
-  String _shortenGenres(String genres) {
-    List<String> genresList = genres.split(', ');
-
-    if (genresList.length > 3) {
-      return genresList.sublist(0, 3).join(', ') + '...'; // Show only first 3 genres
-    }
-
-    return genres;
-  }
-}
-
-
-class ShimmerGameCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[700]!,
-      highlightColor: Colors.grey[500]!,
-      child: Card(
-        color: const Color(0xFF2C2C2C),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.0),
-        ),
-        elevation: 6,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Container(
-                color: Colors.grey[800],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: 20,
-                    color: Colors.grey[800],
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    width: 100,
-                    height: 14,
-                    color: Colors.grey[800],
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    width: 150,
-                    height: 14,
-                    color: Colors.grey[800],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

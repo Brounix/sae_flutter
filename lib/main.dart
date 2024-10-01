@@ -21,7 +21,7 @@ class _MainPageState extends State<MainPage> {
     const FollowsPage(),
     const GameListPage(),
     const CreationPage(),
-    const ProfilePage(),
+    ProfilePage(),
   ];
 
   void _onItemTapped(int index) {

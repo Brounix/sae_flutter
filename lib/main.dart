@@ -5,6 +5,7 @@ import 'package:sae_flutter/pages/follows.dart';
 import 'package:sae_flutter/pages/game_list.dart';
 import 'package:sae_flutter/pages/profile.dart';
 import 'package:sae_flutter/widget/bottom_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -14,7 +15,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  int _selectedIndex = 2; // Default selected index
+  int _selectedIndex = 2;
 
   final List<Widget> _pages = [
     const FavoritesPage(),

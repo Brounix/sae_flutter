@@ -5,6 +5,8 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:sae_flutter/widget/bottom_bar.dart';
 import 'package:sae_flutter/widget/card_game.dart';
 import 'package:shimmer/shimmer.dart';
+import '../ApiKeyManager.dart';
+import 'game_list.dart';
 
 class FavoritesPage extends StatefulWidget {
   const FavoritesPage({Key? key}) : super(key: key);
@@ -15,45 +17,32 @@ class FavoritesPage extends StatefulWidget {
 
 class _FavoritesPageState extends State<FavoritesPage> {
   List<dynamic> games = [];
-  int currentPage = 1;
   bool isLoading = false;
-  String apiKey = '';
-  final ScrollController _scrollController = ScrollController();
+  String? apiKey = ApiKeyManager().apiKey;
 
   @override
   void initState() {
     super.initState();
-    apiKey = '4807c08683494754b36d62164f04e35c'; // Replace with your actual API key
     _fetchGames();
-
-    _scrollController.addListener(() {
-      if (_scrollController.position.pixels ==
-          _scrollController.position.maxScrollExtent) {
-        _fetchGames();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
   }
 
   Future<void> _fetchGames() async {
-    if (isLoading) return;
     setState(() {
       isLoading = true;
     });
 
-    final username = 'Brounix';
-    final response = await http.get(Uri.parse(
-        'https://api.rawg.io/api/users/$username/favorites?key=$apiKey&page=$currentPage'));
+    final response = await http.get(
+      Uri.parse('https://api.rawg.io/api/users/current/favorites'),
+      headers: {
+        'User-Agent': 'sae_flutter/1.0.0',
+        'token': 'Token $apiKey',
+      },
+    );
 
     if (response.statusCode == 200) {
+      final data = jsonDecode(response.body)['results'] ?? [];
       setState(() {
-        games.addAll(jsonDecode(response.body)['results']);
-        currentPage++;
+        games = data;
         isLoading = false;
       });
     } else {
@@ -68,65 +57,91 @@ class _FavoritesPageState extends State<FavoritesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF303030),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const TextField(
-          decoration: InputDecoration(
-            hintText: 'Search',
-            prefixIcon: Icon(Icons.search, color: Colors.white),
-            border: InputBorder.none,
-            filled: true,
-            fillColor: Color(0xFF2C2C2C),
-            contentPadding: EdgeInsets.symmetric(vertical: 0),
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {},
-          ),
-        ],
-      ),
       body: Column(
         children: [
-          // ... order by and text widgets (same as GameListPage)
-
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Your Favorites Games',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Games you like',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          ),
           Expanded(
-            child: MasonryGridView.count(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              crossAxisCount: 2,
-              itemCount: games.length + (isLoading ? 2 : 0),
-              itemBuilder: (context, index) {
-                if (index < games.length) {
-                  final game = games[index];
-                  bool isLargeCard = game['name'].length > 20 || (game['genres'] as List).length > 3;
-                  final platforms = (game['platforms'] as List)
-                      .map<String>((platform) => platform['platform']['name'].toString())
-                      .toList();
-                  final rating = game['rating'] ?? 0.0;
+            child: games.isEmpty && !isLoading
+                ? Center(
+                  child: Text(
+                    "No favorites here !",
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                )
+                : MasonryGridView.count(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                crossAxisCount: 2,
+                itemCount: games.length + 1,
+                itemBuilder: (context, index) {
+                  if (index < games.length) {
+                    final game = games[index];
 
-                  return GameCard(
-                    game : game,
-                    gameId: game['id'].toString(),
-                    title: game['name'],
-                    imageUrl: game['background_image'] ?? '',
-                    genres: (game['genres'] as List).map((genre) => genre['name']).join(', '),
-                    rating: rating,
-                    platforms: platforms,
-                    isLargeCard: isLargeCard,
-                  );
-                } else if (isLoading) {
-                  return ShimmerGameCard();
-                } else {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-              },
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
+                    if (game == null) {
+                      return Container();
+                    }
+
+                    bool isLargeCard = game['name'].length > 20 || (game['genres'] as List).length > 3;
+                    final platforms = (game['platforms'] as List)
+                        .map<String>((platform) => platform['platform']['name'].toString())
+                        .toList();
+                    final rating = game['rating'] ?? 0.0;
+
+                    return GameCard(
+                      game: game,
+                      gameId: game['id'].toString(),
+                      title: game['name'] ?? 'Titre non disponible',
+                      imageUrl: game['background_image'] ?? '',
+                      genres: (game['genres'] as List?)?.map((genre) => genre['name']).join(', ') ?? 'Genres non disponibles',
+                      rating: rating,
+                      platforms: platforms,
+                      isLargeCard: isLargeCard,
+                    );
+                  } else {
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => GameListPage()),
+                        );
+                      },
+                      child: Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[900],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Icon(Icons.add, color: Colors.white, size: 50),
+                        ),
+                      ),
+                    );
+                  }
+                },
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
             ),
           ),
           if (isLoading)

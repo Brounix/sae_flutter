@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../ApiKeyManager.dart';
 import '../widget/card_game.dart';
 
 class GameListPage extends StatefulWidget {
@@ -16,13 +18,14 @@ class _GameListPageState extends State<GameListPage> {
   List<dynamic> games = [];
   int currentPage = 1;
   bool isLoading = false;
-  String apiKey = ''; // Store API key here
+  String? globalApiKey = '818d548ac16c461585d8de97929fa6ad';
+
   final ScrollController _scrollController = ScrollController();
+
 
   @override
   void initState() {
     super.initState();
-    apiKey = '4807c08683494754b36d62164f04e35c';
     _fetchGames();
 
     _scrollController.addListener(() {
@@ -46,7 +49,7 @@ class _GameListPageState extends State<GameListPage> {
     });
 
     final response = await http.get(Uri.parse(
-        'https://api.rawg.io/api/games?key=$apiKey&page=$currentPage'));
+        'https://api.rawg.io/api/games?key=$globalApiKey&page=$currentPage'));
 
     if (response.statusCode == 200) {
       setState(() {
@@ -147,7 +150,7 @@ class _GameListPageState extends State<GameListPage> {
             child: MasonryGridView.count(
               controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              crossAxisCount: 2, // Number of columns
+              crossAxisCount: 2,
               itemCount: games.length + (isLoading ? 2 : 0),
               itemBuilder: (context, index) {
                 if (index < games.length) {
@@ -166,13 +169,12 @@ class _GameListPageState extends State<GameListPage> {
                     title: game['name'],
                     imageUrl: game['background_image'] ?? '',
                     genres: (game['genres'] as List).map((genre) => genre['name']).join(', '),
-                    rating: rating, // Pass the rating
-                    platforms: platforms, // Pass the platforms
+                    rating: rating,
+                    platforms: platforms,
                     isLargeCard: isLargeCard,
                   );
 
                 } else if (isLoading) {
-                  // Show shimmer effect when loading more items
                   return ShimmerGameCard();
                 } else {
                   return const Center(

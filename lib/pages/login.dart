@@ -1,13 +1,12 @@
 import 'dart:convert';
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:sae_flutter/pages/splash_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../ApiKeyManager.dart';
 import '../main.dart';
-import 'game_list.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -18,7 +17,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false; // Add a loading state variable
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +37,6 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Title: RAWG logo
                   SvgPicture.asset(
                     'assets/rawg.svg',
                     height: 50,
@@ -93,10 +91,9 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Login button with loading indicator
                   ElevatedButton(
                     onPressed: _isLoading
-                        ? null // Disable button while loading
+                        ? null
                         : () {
                       if (_formKey.currentState!.validate()) {
                         _login();
@@ -115,7 +112,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: _isLoading
                         ? const CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white), // Set loading indicator color
+                          Colors.white),
                     )
                         : const Text('Login',
                         style: TextStyle(
@@ -176,6 +173,9 @@ class _LoginPageState extends State<LoginPage> {
     if (response.statusCode == 200) {
       final jsonResponse = jsonDecode(response.body);
       final apiKey = jsonResponse['key'];
+
+
+      await ApiKeyManager().setApiKey(apiKey);
 
       Navigator.push(
         context,

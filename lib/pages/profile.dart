@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../ApiKeyManager.dart';
+
 class ProfilePage extends StatefulWidget {
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -12,6 +14,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String name = 'N/A';
   String username = 'N/A';
   String bio = '';
+  String? apiKey = ApiKeyManager().apiKey;
 
   TextEditingController emailController = TextEditingController();
   TextEditingController nameController = TextEditingController();
@@ -40,8 +43,9 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> getUserProfile() async {
     final url = Uri.parse('https://api.rawg.io/api/users/current');
     final headers = {
+      'User-Agent': 'sae_flutter/1.0.0',
       'Content-Type': 'application/json',
-      'Authorization': '4807c08683494754b36d62164f04e35c',
+      'token': 'Token $apiKey',
     };
 
     try {
@@ -50,23 +54,31 @@ class _ProfilePageState extends State<ProfilePage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-          email = data['email'] ?? 'Not Available'; // Handle missing data
-          name = data['name'] ?? 'Not Available';
+          email = data['email'] ?? 'Not Available';
+          name = data['full_name'] ?? 'Not Available';
           username = data['username'] ?? 'Not Available';
           bio = data['bio'] ?? 'No bio available';
+
           emailController.text = email;
           nameController.text = name;
           usernameController.text = username;
           bioController.text = bio;
         });
       } else {
-        print('Failed to load user data. Status code: ${response.statusCode}');
+        if (response.statusCode == 401) {
+          print('Unauthorized access. Please log in.');
+        } else {
+          print('Failed to load user data. Status code: ${response.statusCode}');
+        }
       }
+    } on http.ClientException catch (e) {
+      print('Network error: $e');
+    } on FormatException catch (e) {
+      print('Error decoding response: $e');
     } catch (e) {
       print('Error fetching profile data: $e');
     }
   }
-
 
   @override
   Widget build(BuildContext context) {

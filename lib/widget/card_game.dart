@@ -3,8 +3,10 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../ApiKeyManager.dart';
 import '../pages/game_details.dart';
 
 class GameCard extends StatefulWidget {
@@ -13,8 +15,8 @@ class GameCard extends StatefulWidget {
   final String imageUrl;
   final String genres;
   final bool isLargeCard;
-  final double rating; // Add rating field
-  final List<String> platforms; // Add platforms field
+  final double rating;
+  final List<String> platforms;
   final dynamic game;
 
   const GameCard({
@@ -23,9 +25,9 @@ class GameCard extends StatefulWidget {
     required this.title,
     required this.imageUrl,
     required this.genres,
-    required this.rating, // Initialize rating
-    required this.platforms, // Initialize platforms
-    this.isLargeCard = false, // Default to false
+    required this.rating,
+    required this.platforms,
+    this.isLargeCard = false,
   });
 
   @override
@@ -33,90 +35,124 @@ class GameCard extends StatefulWidget {
 }
 
 class _GameCardState extends State<GameCard> {
-  String apiKey = '4807c08683494754b36d62164f04e35c';
+  String? apiKey = ApiKeyManager().apiKey;
+  String? globalApiKey = '818d548ac16c461585d8de97929fa6ad';
   Set<String> favoriteGameIds = {};
   Set<String> userGames = {};
-  bool isLoading = true; // Add loading state
+  bool isLoading = true;
   String? username;
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    fetchData();
   }
 
-  Future<void> _loadUserData() async {
-    username = await getUserData();
-    if (username != null) {
-      favoriteGameIds = await getFavoriteGameIds(username!);
-      userGames = await getUserGames(username!);
-    }
+  Future<void> fetchData() async {
+    final favorites = await getFavoriteGameIds();
+    final userGamesData = await getUserGames();
+
     setState(() {
+      favoriteGameIds = favorites;
+      userGames = userGamesData;
       isLoading = false;
     });
   }
 
-  Future<Set<String>> getFavoriteGameIds(String username) async {
-    final response = await http.get(Uri.parse(
-        'https://api.rawg.io/api/users/$username/favorites?key=$apiKey'));
 
-    if (response.statusCode == 200) {
-      final favoriteGames = jsonDecode(response.body)['results'] as List;
-      return favoriteGames.map((game) => game['id'].toString()).toSet();
-    } else {
-      print('Failed to fetch favorite games');
-      return {};
-    }
-  }
-
-  Future<Set<String>> getUserGames(String username) async {
-    final response = await http.get(Uri.parse(
-        'https://api.rawg.io/api/users/$username/games?key=$apiKey'));
-
-    if (response.statusCode == 200) {
-      final userGamesData = jsonDecode(response.body)['results'] as List;
-      return userGamesData.map((game) => game['id'].toString()).toSet();
-    } else {
-      print('Failed to fetch user games');
-      return {};
-    }
-  }
-
-  Future<String?> getUserData() async {
-    const String apiUrl = 'https://api.rawg.io/api/users/current';
-
+  Future<Set<String>> getFavoriteGameIds() async {
+    print('Fetching favorite games...');
     final response = await http.get(
-      Uri.parse(apiUrl),
+      Uri.parse('https://api.rawg.io/api/users/current/favorites'),
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Token $apiKey',
+        'User-Agent': 'sae_flutter/1.0.0',
+        'token': 'Token $apiKey',
       },
     );
 
+    print('Response status: ${response.statusCode}');
     if (response.statusCode == 200) {
-      var userData = json.decode(response.body);
+      try {
+        final body = jsonDecode(response.body);
 
-      if (userData != null && userData.containsKey('username')) {
-        return userData['username'] as String?;
-      } else {
-        print('Le champ "username" est manquant');
-        return null;
+        if (body != null && body['results'] != null) {
+          final favoriteGames = body['results'] as List;
+
+          final validGames = favoriteGames.where((game) => game != null).toList();
+
+          if (validGames.isEmpty) {
+            print('No valid games found.');
+            return {};
+          }
+
+          return validGames.map((game) => game['id'].toString()).toSet();
+        } else {
+          print('No results found in the response');
+          return {};
+        }
+      } catch (e) {
+        print('Error parsing JSON: $e');
+        return {};
       }
     } else {
-      print('Error fetching user data: ${response.statusCode}');
-      return null;
+      print('Failed to fetch favorite games: ${response.statusCode}');
+      return {};
     }
   }
 
 
-  Future<void> toggleFavoriteGame(String username, String gameId, bool isFavorite) async {
-    final String apiUrl = 'https://api.rawg.io/api/users/$username/favorites?key=$apiKey';
+
+  Future<Set<String>> getUserGames() async {
+    print('Fetching recent games...');
+    final response = await http.get(
+      Uri.parse('https://api.rawg.io/api/users/current/games'),
+      headers: {
+        'User-Agent': 'sae_flutter/1.0.0',
+        'token': 'Token $apiKey',
+      },
+    );
+
+    print('Response status: ${response.statusCode}');
+    if (response.statusCode == 200) {
+      try {
+        final body = jsonDecode(response.body);
+
+        if (body != null && body['results'] != null) {
+          final recentGames = body['results'] as List;
+
+          final validGames = recentGames.where((game) => game != null).toList();
+
+          if (validGames.isEmpty) {
+            print('No valid recent games found.');
+            return {};
+          }
+
+          return validGames.map((game) => game['id'].toString()).toSet();
+        } else {
+          print('No recent games found in the response');
+          return {};
+        }
+      } catch (e) {
+        print('Error parsing JSON: $e');
+        return {};
+      }
+    } else {
+      print('Failed to fetch recent games: ${response.statusCode}');
+      return {};
+    }
+  }
+
+
+
+  Future<void> toggleFavoriteGame(String gameId, bool isFavorite) async {
+    final String apiUrl = 'https://api.rawg.io/api/users/current/favorites';
 
     final response = await http.post(
       Uri.parse(apiUrl),
       headers: {
+        'User-Agent': 'sae_flutter/1.0.0',
         'Content-Type': 'application/json',
-        'Authorization': 'Token $apiKey',
+        'token': 'Token $apiKey',
       },
       body: jsonEncode({
         'game_id': gameId,
@@ -124,25 +160,25 @@ class _GameCardState extends State<GameCard> {
       }),
     );
 
-    print('API response: ${response.body}');  // Ajoute ceci pour voir la réponse de l'API
+    print('API response: ${response.body}');
 
     if (response.statusCode == 200) {
-      print(isFavorite ? 'Jeu retiré des favoris' : 'Jeu ajouté aux favoris');
+      print(isFavorite ? 'Jeu retiré des suivis' : 'Jeu ajouté aux suivis');
     } else {
-      print('Erreur lors de la modification des favoris : ${response.statusCode}');
+      print('Erreur lors de la modification des jeux suivis : ${response.statusCode}');
     }
   }
 
 
-
-  Future<void> toggleUserGame(String username, String gameId, bool isInLibrary) async {
-    final String apiUrl = 'https://api.rawg.io/api/users/$username/games?key=$apiKey';
+  Future<void> toggleUserGame(String apiKey, String gameId, bool isInLibrary) async {
+    final String apiUrl = 'https://api.rawg.io/api/users/current/games';
 
     final response = await http.post(
       Uri.parse(apiUrl),
       headers: {
+        'User-Agent': 'sae_flutter/1.0.0',
         'Content-Type': 'application/json',
-        'Authorization': 'Token $apiKey',
+        'token': 'Token $apiKey',
       },
       body: jsonEncode({
         'game_id': gameId,
@@ -150,18 +186,20 @@ class _GameCardState extends State<GameCard> {
       }),
     );
 
+    print('API response: ${response.body}');
+
     if (response.statusCode == 200) {
-      print(isInLibrary ? 'Jeu retiré de la bibliothèque' : 'Jeu ajouté à la bibliothèque');
+      print(isInLibrary ? 'Jeu retiré des récents' : 'Jeu ajouté aux récents');
     } else {
-      print('Erreur lors de la modification de la bibliothèque : ${response.statusCode}');
+      print('Erreur lors de la modification des récents : ${response.statusCode}');
     }
   }
+
 
 
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      // Show a loading indicator while data is being fetched
       return ShimmerGameCard();
     }
 
@@ -287,7 +325,7 @@ class _GameCardState extends State<GameCard> {
                             setState(() {
                               isFavorite = !isFavorite;
                             });
-                            await toggleFavoriteGame(username!, widget.gameId, isFavorite);
+                            await toggleFavoriteGame(widget.gameId, isFavorite);
                           }
 
                       ),

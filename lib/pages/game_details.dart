@@ -21,7 +21,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
   }
 
   Future<void> _fetchGameDetails() async {
-    final apiKey = '4807c08683494754b36d62164f04e35c';
+    final apiKey = '818d548ac16c461585d8de97929fa6ad';
     final response = await http.get(Uri.parse(
         'https://api.rawg.io/api/games/${widget.gameId}?key=$apiKey'));
 

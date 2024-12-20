@@ -1,66 +1,102 @@
 import 'package:flutter/material.dart';
-import 'package:sae_flutter/pages/creation.dart';
-import 'package:sae_flutter/pages/favorite.dart';
-import 'package:sae_flutter/pages/follows.dart';
-import 'package:sae_flutter/pages/game_list.dart';
-import 'package:sae_flutter/pages/profile.dart';
-import 'package:sae_flutter/widget/bottom_bar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gif_view/gif_view.dart';
+import 'package:provider/provider.dart';
+import 'package:sae_flutter/api/api_manager.dart';
+import 'package:sae_flutter/api/game_repository.dart';
+import 'package:sae_flutter/api/user_repository.dart';
+import 'package:sae_flutter/domain/game_detail_notifier.dart';
+import 'package:sae_flutter/domain/game_list_notifier.dart';
+import 'package:sae_flutter/domain/login_notifier.dart';
+import 'package:sae_flutter/domain/profile_notifier.dart';
+import 'package:sae_flutter/ui/login.dart';
 
-class MainPage extends StatefulWidget {
-  const MainPage({Key? key}) : super(key: key);
+import 'domain/creation_notifier.dart';
+import 'domain/favorite_notifier.dart';
+import 'domain/followers_notifier.dart';
 
-  @override
-  State<MainPage> createState() => _MainPageState();
+
+void main() {
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => LoginNotifier(UserRepository(ApiManager())),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => GameListNotifier(GameRepository(ApiManager())),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => GameDetailNotifier(GameRepository(ApiManager())),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ProfileNotifier(UserRepository(ApiManager())),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CreationNotifier(GameRepository(ApiManager())),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => FavoritesNotifier(GameRepository(ApiManager())),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => FollowersNotifier(UserRepository(ApiManager())),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
-class _MainPageState extends State<MainPage> {
-  int _selectedIndex = 2;
-
-  final List<Widget> _pages = [
-    const FavoritesPage(),
-    const FollowsPage(),
-    const GameListPage(),
-    const CreationPage(),
-    ProfilePage(),
-  ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    return const MaterialApp(
+      home: SplashScreen(),
+    );
+  }
+}
+
+class SplashScreen extends StatelessWidget {
+  const SplashScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) =>  LoginPage()),
+      );
+    });
+
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
-      ),
-      extendBody: true,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: SizedBox(
-        height: 80,
-        width: 80,
-        child: FloatingActionButton(
-          shape: const CircleBorder(),
-          backgroundColor: const Color(0xFF252222),
-          onPressed: () {
-            setState(() {
-              _selectedIndex = 2;
-            });
-          },
-          child: Icon(
-            Icons.add,
-            size: 36,
-            color: _selectedIndex == 2 ? Colors.white : Colors.grey,
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/background.png'),
+            fit: BoxFit.cover,
           ),
         ),
-      ),
-      bottomNavigationBar: MyBottomBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 20),
+              SvgPicture.asset(
+                'assets/rawg.svg',
+                height: 50,
+                color: Colors.white,
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: MediaQuery.of(context).size.width,
+                height: 200,
+                child: GifView.asset('assets/splash.gif'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

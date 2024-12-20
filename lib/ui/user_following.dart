@@ -1,54 +1,42 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import '../domain/following_notifier.dart';
 
-import '../ApiKeyManager.dart';
-
-class FollowsPage extends StatefulWidget {
-  const FollowsPage({Key? key}) : super(key: key);
+class UserFollowingPage extends StatefulWidget {
+  const UserFollowingPage({Key? key}) : super(key: key);
 
   @override
-  _FollowsPageState createState() => _FollowsPageState();
+  _UserFollowingPageState createState() => _UserFollowingPageState();
 }
 
-class _FollowsPageState extends State<FollowsPage> {
-  List<dynamic> users = [];
-  String? apiKey = ApiKeyManager().apiKey;
-
+class _UserFollowingPageState extends State<UserFollowingPage> {
   @override
   void initState() {
     super.initState();
-    _fetchUsers();
-  }
-
-  Future<void> _fetchUsers() async {
-    final response = await http.get(Uri.parse('https://rawg.io/api/users?key=$apiKey'));
-
-    if (response.statusCode == 200) {
-      setState(() {
-        users = jsonDecode(response.body)['results'];
-      });
-    } else {
-      print('Erreur lors de la récupération des utilisateurs');
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final notifier = Provider.of<FollowingNotifier>(context, listen: false);
+      notifier.fetchFollowing();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final followingNotifier = Provider.of<FollowingNotifier>(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFF303030),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, // Alignement à gauche pour le texte "Follow People"
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Search users',
-                hintStyle: const TextStyle(color: Colors.white54), // Couleur du texte
-                prefixIcon: const Icon(Icons.search, color: Colors.white54), // Couleur de l'icône
+                hintStyle: const TextStyle(color: Colors.white54),
+                prefixIcon: const Icon(Icons.search, color: Colors.white54),
                 filled: true,
-                fillColor: Colors.grey[800], // Couleur de fond de la barre de recherche
+                fillColor: Colors.grey[800],
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: Colors.transparent),
@@ -59,7 +47,7 @@ class _FollowsPageState extends State<FollowsPage> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.white), // Couleur de la bordure au focus
+                  borderSide: const BorderSide(color: Colors.white),
                 ),
               ),
             ),
@@ -67,7 +55,7 @@ class _FollowsPageState extends State<FollowsPage> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Text(
-              'Follow',
+              'Following',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -76,29 +64,48 @@ class _FollowsPageState extends State<FollowsPage> {
             ),
           ),
           Expanded(
-            child: users.isNotEmpty
+            child: followingNotifier.isLoading
+                ? const Center(
+              child: CircularProgressIndicator(),
+            )
+                : followingNotifier.following.isNotEmpty
                 ? ListView.builder(
               padding: const EdgeInsets.all(16.0),
-              itemCount: users.length,
+              itemCount: followingNotifier.following.length,
               itemBuilder: (context, index) {
-                final user = users[index];
+                final user = followingNotifier.following[index];
                 return _buildUserCard(user);
               },
             )
-                : const Center(child: CircularProgressIndicator()),
+                : const Center(
+              child: Text(
+                'No users followed.',
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontSize: 18,
+                ),
+              ),
+            ),
           ),
+          if (followingNotifier.errorMessage.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                followingNotifier.errorMessage,
+                style: const TextStyle(color: Colors.red, fontSize: 16),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  // Méthode pour construire une carte utilisateur
   Widget _buildUserCard(dynamic user) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundImage: NetworkImage(user['profile_image'] ?? ''), // Image de profil de l'utilisateur
+          backgroundImage: NetworkImage(user['profile_image'] ?? ''),
         ),
         title: Text(
           user['username'] ?? 'Unknown',

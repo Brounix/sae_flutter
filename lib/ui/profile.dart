@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:sae_flutter/ui/login.dart';
+import 'package:sae_flutter/ui/user_following.dart';
+import 'package:sae_flutter/ui/user_follows.dart';
 import 'dart:convert';
-
-import '../ApiKeyManager.dart';
+import '../api/api_key_manager.dart';
+import '../domain/profile_notifier.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -14,7 +18,10 @@ class _ProfilePageState extends State<ProfilePage> {
   String name = 'N/A';
   String username = 'N/A';
   String bio = '';
+  String avatarUrl = '';
   String? apiKey = ApiKeyManager().apiKey;
+  int followersCount = 0;
+  int followingCount = 0;
 
   TextEditingController emailController = TextEditingController();
   TextEditingController nameController = TextEditingController();
@@ -24,11 +31,13 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ProfileNotifier>(context, listen: false).loadUserProfile();
+    });
     emailController.text = email;
     nameController.text = name;
     usernameController.text = username;
     bioController.text = bio;
-    getUserProfile();
   }
 
   @override
@@ -40,48 +49,11 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
-  Future<void> getUserProfile() async {
-    final url = Uri.parse('https://api.rawg.io/api/users/current');
-    final headers = {
-      'User-Agent': 'sae_flutter/1.0.0',
-      'Content-Type': 'application/json',
-      'token': 'Token $apiKey',
-    };
-
-    try {
-      final response = await http.get(url, headers: headers);
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          email = data['email'] ?? 'Not Available';
-          name = data['full_name'] ?? 'Not Available';
-          username = data['username'] ?? 'Not Available';
-          bio = data['bio'] ?? 'No bio available';
-
-          emailController.text = email;
-          nameController.text = name;
-          usernameController.text = username;
-          bioController.text = bio;
-        });
-      } else {
-        if (response.statusCode == 401) {
-          print('Unauthorized access. Please log in.');
-        } else {
-          print('Failed to load user data. Status code: ${response.statusCode}');
-        }
-      }
-    } on http.ClientException catch (e) {
-      print('Network error: $e');
-    } on FormatException catch (e) {
-      print('Error decoding response: $e');
-    } catch (e) {
-      print('Error fetching profile data: $e');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
+    final profileNotifier = Provider.of<ProfileNotifier>(context);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -95,19 +67,69 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                const CircleAvatar(radius: 40, backgroundColor: Colors.grey),
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.grey,
+                  backgroundImage: profileNotifier.avatarUrl.isNotEmpty
+                      ? NetworkImage(profileNotifier.avatarUrl)
+                      : null,
+                  child: profileNotifier.avatarUrl.isEmpty
+                      ? const Icon(Icons.person, size: 40, color: Colors.white)
+                      : null,
+                ),
                 const SizedBox(height: 10),
-                Text(username, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                Text(profileNotifier.username,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
-                Text('Followers: 12  Following: 8', style: TextStyle(color: Colors.grey[500])),
+                buildStatButton(
+                  'Followers: ${profileNotifier.followersCount}',
+                      () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => UserFollowsPage(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                buildStatButton(
+                  'Following: ${profileNotifier.followingCount}',
+                      () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => UserFollowingPage(),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 20),
-                buildEditableField('Mail', emailController),
-                buildEditableField('Name', nameController),
-                buildEditableField('Username', usernameController),
-                buildEditableField('Bio', bioController, maxLines: 3),
-                const SizedBox(height: 20),
-                buildStyledButton('Change Password', Colors.grey, () => changePassword(context)),
-                buildStyledButton('Logout', const Color(0xFF671111), () => logout(context)),
+                buildEditableField(
+                  'Mail',
+                  profileNotifier.email,
+                      (value) => profileNotifier.updateUserProfile('email', value),
+                ),
+                buildEditableField(
+                  'Name',
+                  profileNotifier.name,
+                      (value) => profileNotifier.updateUserProfile('name', value),
+                ),
+                buildEditableField(
+                  'Username',
+                  profileNotifier.username,
+                      (value) => profileNotifier.updateUserProfile('username', value),
+                ),
+                buildEditableField(
+                  'Bio',
+                  profileNotifier.bio,
+                      (value) => profileNotifier.updateUserProfile('bio', value),
+                  maxLines: 3,
+                ),
+                buildStyledButton(
+                  'Logout',
+                  const Color(0xFF671111),
+                      () => logout(context),
+                ),
               ],
             ),
           ),
@@ -116,7 +138,10 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget buildEditableField(String label, TextEditingController controller, {int maxLines = 1}) {
+  Widget buildEditableField(
+      String label, String value, ValueChanged<String> onUpdate,
+      {int maxLines = 1}) {
+    final controller = TextEditingController(text: value);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Material(
@@ -141,16 +166,35 @@ class _ProfilePageState extends State<ProfilePage> {
               borderRadius: BorderRadius.circular(20),
               borderSide: BorderSide.none,
             ),
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.edit, color: Colors.white70),
-              onPressed: () => showConfirmationDialog(context, label, controller.text),
-            ),
           ),
+          onEditingComplete: () {
+            onUpdate(controller.text);
+            FocusScope.of(context).unfocus();
+          },
         ),
       ),
     );
   }
 
+  Widget buildStatButton(String text, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+        decoration: BoxDecoration(
+          color: Colors.grey[800],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget buildStyledButton(String text, Color color, VoidCallback onPressed) {
     return Padding(
@@ -177,25 +221,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-
-  void changePassword(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Change Password'),
-          content: const Text('Functionality not implemented yet.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   void logout(BuildContext context) {
     showDialog(
       context: context,
@@ -210,8 +235,15 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             TextButton(
               onPressed: () {
+                ApiKeyManager().setApiKey('');
+
                 Navigator.of(context).pop();
-                // Effectuer ici la déconnexion
+
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                      (route) => false,
+                );
               },
               child: const Text('Logout'),
             ),
@@ -220,6 +252,7 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
   }
+
 
   Future<void> updateUserProfile(String field, String value) async {
     final url = Uri.parse('https://api.rawg.io/api/users/current');
@@ -251,13 +284,15 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  void showConfirmationDialog(BuildContext context, String field, String value) {
+  void showConfirmationDialog(
+      BuildContext context, String field, String value) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirmation'),
-          content: Text('Are you sure you want to change your $field to "$value"?'),
+          content:
+              Text('Are you sure you want to change your $field to $value?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -265,8 +300,8 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             TextButton(
               onPressed: () {
-                updateUserProfile(field, value);
                 Navigator.of(context).pop();
+                updateUserProfile(field, value);
               },
               child: const Text('Confirm'),
             ),

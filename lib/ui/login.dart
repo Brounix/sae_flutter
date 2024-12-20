@@ -1,12 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../ApiKeyManager.dart';
-import '../main.dart';
+import '../domain/login_notifier.dart';
+import 'homepage.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -17,10 +15,11 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
+    final authNotifier = Provider.of<LoginNotifier>(context);
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -44,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 40),
 
-                  // mail input
+                  // Email input
                   TextFormField(
                     controller: _emailController,
                     style: const TextStyle(color: Color(0xFFFFFFFF)),
@@ -91,12 +90,30 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 16),
 
+                  // Login button
                   ElevatedButton(
-                    onPressed: _isLoading
+                    onPressed: authNotifier.isLoading
                         ? null
-                        : () {
+                        : () async {
                       if (_formKey.currentState!.validate()) {
-                        _login();
+                        bool success = await authNotifier.login(
+                          _emailController.text,
+                          _passwordController.text,
+                        );
+                        if (success) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MainPage(),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Invalid credentials'),
+                            ),
+                          );
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -109,17 +126,20 @@ class _LoginPageState extends State<LoginPage> {
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                     ),
-                    child: _isLoading
+                    child: authNotifier.isLoading
                         ? const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white),
+                      valueColor:
+                      AlwaysStoppedAnimation<Color>(Colors.white),
                     )
-                        : const Text('Login',
-                        style: TextStyle(
-                            fontSize: 16, color: Color(0xFF7E7E7E))),
+                        : const Text(
+                      'Login',
+                      style: TextStyle(
+                          fontSize: 16, color: Color(0xFF7E7E7E)),
+                    ),
                   ),
                   const SizedBox(height: 20),
 
+                  // Register link
                   RichText(
                     text: TextSpan(
                       text: 'Not registered yet? ',
@@ -129,7 +149,8 @@ class _LoginPageState extends State<LoginPage> {
                           child: InkWell(
                             onTap: () async {
                               await launchUrl(
-                                  Uri.parse("https://rawg.io/signup"));
+                                Uri.parse("https://rawg.io/signup"),
+                              );
                             },
                             child: const Text(
                               'Register',
@@ -150,46 +171,6 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
-  }
-
-  Future<void> _login() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    await Future.delayed(const Duration(seconds: 2));
-
-    final response = await http.post(
-      Uri.parse('https://rawg.io/api/auth/login'),
-      headers: {
-        'User-Agent': 'sae_flutter/1.0.0',
-      },
-      body: {
-        'email': _emailController.text,
-        'password': _passwordController.text,
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final jsonResponse = jsonDecode(response.body);
-      final apiKey = jsonResponse['key'];
-
-
-      await ApiKeyManager().setApiKey(apiKey);
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => MainPage()),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid credentials')),
-      );
-    }
-
-    setState(() {
-      _isLoading = false; // Hide loading indicator
-    });
   }
 
   @override

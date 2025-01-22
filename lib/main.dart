@@ -1,10 +1,11 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gif_view/gif_view.dart';
 import 'package:provider/provider.dart';
-import 'package:sae_flutter/api/api_manager.dart';
-import 'package:sae_flutter/api/game_repository.dart';
-import 'package:sae_flutter/api/user_repository.dart';
+import 'package:sae_flutter/data_source/api_manager.dart';
+import 'package:sae_flutter/repo/game_repository.dart';
+import 'package:sae_flutter/repo/user_repository.dart';
 import 'package:sae_flutter/domain/game_detail_notifier.dart';
 import 'package:sae_flutter/domain/game_list_notifier.dart';
 import 'package:sae_flutter/domain/login_notifier.dart';
@@ -14,9 +15,15 @@ import 'package:sae_flutter/ui/login.dart';
 import 'domain/creation_notifier.dart';
 import 'domain/favorite_notifier.dart';
 import 'domain/followers_notifier.dart';
+import 'domain/neadry_user_notifier.dart';
+import 'firebase_options.dart';
 
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(
     MultiProvider(
       providers: [
@@ -40,6 +47,9 @@ void main() {
         ),
         ChangeNotifierProvider(
           create: (_) => FollowersNotifier(UserRepository(ApiManager())),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => NearbyUsersNotifier(),
         ),
       ],
       child: const MyApp(),

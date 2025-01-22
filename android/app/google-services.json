@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "187536640839",
+    "firebase_url": "https://rawg-eef07-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "rawg-eef07",
+    "storage_bucket": "rawg-eef07.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:187536640839:android:7f2a200769de1b36fdda62",
+        "android_client_info": {
+          "package_name": "com.sae.sae_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqJhKEKNRP11bFsV45IuxuNjxCx6Cgn7w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

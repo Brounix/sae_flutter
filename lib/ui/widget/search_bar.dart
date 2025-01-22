@@ -28,7 +28,7 @@ class _ExpandableSearchBarState extends State<ExpandableSearchBar> {
   }
 
   Future<void> fetchGenres() async {
-    final response = await http.get(Uri.parse('https://api.rawg.io/api/genres?key=$globalApiKey'));
+    final response = await http.get(Uri.parse('https://data_source.rawg.io/data_source/genres?key=$globalApiKey'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -41,7 +41,7 @@ class _ExpandableSearchBarState extends State<ExpandableSearchBar> {
   }
 
   Future<void> fetchPlatforms() async {
-    final response = await http.get(Uri.parse('https://api.rawg.io/api/platforms?key=$globalApiKey'));
+    final response = await http.get(Uri.parse('https://data_source.rawg.io/data_source/platforms?key=$globalApiKey'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);

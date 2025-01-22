@@ -1,15 +1,12 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../api/api_key_manager.dart';
-import '../api/api_manager.dart';
-import '../api/game_repository.dart';
-import '../ui/game_details.dart';
+import '../../data_source/api_key_manager.dart';
+import '../../data_source/api_manager.dart';
+import '../../repo/game_repository.dart';
+import '../game_details.dart';
 
 class GameCard extends StatefulWidget {
   final String gameId;
@@ -55,11 +52,14 @@ class _GameCardState extends State<GameCard> {
   }
 
   Future<void> _initializeData() async {
+    if (!mounted) return;
     await _fetchFavoriteGames();
     await _fetchUserGames();
-    setState(() {
-      isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _fetchFavoriteGames() async {

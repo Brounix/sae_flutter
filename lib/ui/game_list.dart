@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:sae_flutter/ui/widget/card_game.dart';
+import 'package:sae_flutter/ui/widget/search_bar.dart';
 
 import '../domain/game_list_notifier.dart';
-import '../widget/search_bar.dart';
-import '../widget/card_game.dart';
 
 class GameListPage extends StatefulWidget {
   const GameListPage({super.key});

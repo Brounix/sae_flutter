@@ -5,7 +5,7 @@ import 'package:sae_flutter/ui/login.dart';
 import 'package:sae_flutter/ui/user_following.dart';
 import 'package:sae_flutter/ui/user_follows.dart';
 import 'dart:convert';
-import '../api/api_key_manager.dart';
+import '../data_source/api_key_manager.dart';
 import '../domain/profile_notifier.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -255,7 +255,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
 
   Future<void> updateUserProfile(String field, String value) async {
-    final url = Uri.parse('https://api.rawg.io/api/users/current');
+    final url = Uri.parse('https://data_source.rawg.io/data_source/users/current');
     final headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer your_api_key_here',

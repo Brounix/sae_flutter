@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:sae_flutter/ui/creation.dart';
 import 'package:sae_flutter/ui/favorite.dart';
-import 'package:sae_flutter/ui/follows.dart';
 import 'package:sae_flutter/ui/game_list.dart';
 import 'package:sae_flutter/ui/profile.dart';
-import 'package:sae_flutter/widget/bottom_bar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sae_flutter/ui/widget/bottom_bar.dart';
+
+import 'neardy_user.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -19,7 +19,7 @@ class _MainPageState extends State<MainPage> {
 
   final List<Widget> _pages = [
     const FavoritesPage(),
-    const FollowsPage(),
+    const NeardyUserPage(),
     const GameListPage(),
     const CreationPage(),
     ProfilePage(),

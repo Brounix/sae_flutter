@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../api/game_repository.dart';
+import '../repo/game_repository.dart';
 
 class CreationNotifier extends ChangeNotifier {
   final GameRepository gameRepository;

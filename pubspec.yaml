@@ -49,6 +49,9 @@ dependencies:
   shared_preferences: ^2.3.2
   api_manager: ^0.1.36
   provider: ^6.1.2
+  firebase_core: ^3.10.0
+  geolocator: ^13.0.2
+  firebase_database: ^11.3.0
 
 flutter_launcher_icons:
   android: "rawg_icon"

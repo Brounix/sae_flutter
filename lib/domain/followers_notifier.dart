@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../api/user_repository.dart';
+import '../repo/user_repository.dart';
 
 class FollowersNotifier extends ChangeNotifier {
   final UserRepository userRepository;

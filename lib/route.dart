@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:sae_flutter/ui/login.dart';
 import 'package:sae_flutter/ui/creation.dart';
 import 'package:sae_flutter/ui/favorite.dart';
-import 'package:sae_flutter/ui/follows.dart';
 import 'package:sae_flutter/ui/profile.dart';
 import 'package:sae_flutter/main.dart';
 

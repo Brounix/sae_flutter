@@ -1,6 +1,6 @@
 import 'dart:convert';
-import '../api/api_manager.dart';
-import '../api/api_key_manager.dart';
+import '../data_source/api_key_manager.dart';
+import '../data_source/api_manager.dart';
 
 class UserRepository {
   final ApiManager _apiManager;
@@ -79,6 +79,30 @@ class UserRepository {
   }
 
   updateUserProfile(String field, String value) {}
+
+  Future<Map<String, dynamic>> fetchUserProfileByUsername(String username) async {
+    try {
+      print('Fetching user profile for username: $username');
+
+      final response = await _apiManager.getUser(
+        'users/$username',
+        token: ApiKeyManager().apiKey!,
+      );
+
+      print('Response received: $response');
+
+      return {
+        'avatar': response['avatar'] ?? '',
+        'username': response['username'] ?? 'Unknown',
+        'name': response['full_name'] ?? 'Unknown',
+      };
+    } catch (e) {
+      print('Error fetching user profile by username: $e');
+      throw Exception('Failed to fetch user profile by username');
+    }
+  }
+
+
 
 
 }

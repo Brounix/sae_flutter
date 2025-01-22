@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sae_flutter/api/user_repository.dart';
+import 'package:sae_flutter/repo/user_repository.dart';
 
 class ProfileNotifier extends ChangeNotifier {
   final UserRepository gameRepository;

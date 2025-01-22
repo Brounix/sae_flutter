@@ -1,14 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import 'package:sae_flutter/api/user_repository.dart';
-
-import '../api/api_key_manager.dart';
-import '../api/api_manager.dart';
-import '../api/game_repository.dart';
+import 'package:sae_flutter/ui/widget/search_bar.dart';
 import '../domain/followers_notifier.dart';
-import '../widget/search_bar.dart';
 
 class UserFollowsPage extends StatefulWidget {
   const UserFollowsPage({Key? key}) : super(key: key);

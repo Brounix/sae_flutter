@@ -1,16 +1,9 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:provider/provider.dart';
-import 'package:sae_flutter/widget/bottom_bar.dart';
-import 'package:sae_flutter/widget/card_game.dart';
-import 'package:shimmer/shimmer.dart';
-import '../api/api_key_manager.dart';
-import '../api/api_manager.dart';
-import '../api/game_repository.dart';
 import '../domain/favorite_notifier.dart';
-import '../widget/search_bar.dart';
+import '../ui/widget/search_bar.dart';
+import '../ui/widget/card_game.dart';
 
 class FavoritesPage extends StatefulWidget {
   const FavoritesPage({Key? key}) : super(key: key);

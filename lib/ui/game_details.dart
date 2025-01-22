@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../api/api_manager.dart';
-import '../api/game_repository.dart';
+import '../data_source/api_manager.dart';
+import '../repo/game_repository.dart';
 import '../domain/game_detail_notifier.dart';
 
 class GameDetailPage extends StatelessWidget {

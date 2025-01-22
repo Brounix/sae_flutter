@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:provider/provider.dart';
 import '../domain/creation_notifier.dart';
-import '../widget/search_bar.dart';
-import '../widget/card_game.dart';
+import '../ui/widget/search_bar.dart';
+import '../ui/widget/card_game.dart';
 
 class CreationPage extends StatefulWidget {
   const CreationPage({Key? key}) : super(key: key);

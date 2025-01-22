@@ -1,5 +1,6 @@
-import 'package:sae_flutter/api/api_key_manager.dart';
-import 'package:sae_flutter/api/api_manager.dart';
+import 'package:sae_flutter/data_source/api_key_manager.dart';
+
+import '../data_source/api_manager.dart';
 
 class GameRepository {
   final ApiManager _apiManager;

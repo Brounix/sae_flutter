@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sae_flutter/ui/user_detail.dart';
 import '../data_source/api_manager.dart';
 import '../domain/neadry_user_notifier.dart';
+import '../domain/user_detail_notifier.dart';
 import '../repo/user_repository.dart';
+
 
 class NeardyUserPage extends StatefulWidget {
   const NeardyUserPage({Key? key}) : super(key: key);
@@ -19,11 +22,8 @@ class _NeardyUserPageState extends State<NeardyUserPage> {
       final nearbyUsersNotifier = Provider.of<NearbyUsersNotifier>(context, listen: false);
 
       try {
-        print('Fetching user profile...');
-        final userProfile = await UserRepository(ApiManager()).fetchUserProfile();
-        print('User profile fetched: $userProfile');
-
-        nearbyUsersNotifier.fetchNearbyUsers(20.0);
+        //final userProfile = await UserRepository(ApiManager()).fetchUserProfile();
+        nearbyUsersNotifier.fetchNearbyUsers(10.0);
       } catch (e) {
         print('Error fetching user profile: $e');
       }
@@ -33,8 +33,8 @@ class _NeardyUserPageState extends State<NeardyUserPage> {
   @override
   Widget build(BuildContext context) {
     final nearbyUsersNotifier = Provider.of<NearbyUsersNotifier>(context);
+    final selectedUserNotifier = Provider.of<SelectedUserNotifier>(context, listen: false);
 
-    print('Building widget...');
     return Scaffold(
       backgroundColor: const Color(0xFF303030),
       body: Column(
@@ -66,7 +66,7 @@ class _NeardyUserPageState extends State<NeardyUserPage> {
               itemCount: nearbyUsersNotifier.nearbyUsers.length,
               itemBuilder: (context, index) {
                 final user = nearbyUsersNotifier.nearbyUsers[index];
-                return _buildUserCard(user);
+                return _buildUserCard(user, selectedUserNotifier);
               },
             ),
           ),
@@ -75,8 +75,7 @@ class _NeardyUserPageState extends State<NeardyUserPage> {
     );
   }
 
-  Widget _buildUserCard(Map<String, dynamic> user) {
-    print('Building user card for user: $user');
+  Widget _buildUserCard(Map<String, dynamic> user, SelectedUserNotifier selectedUserNotifier) {
     return Card(
       color: const Color(0xFF434343),
       elevation: 5,
@@ -92,7 +91,13 @@ class _NeardyUserPageState extends State<NeardyUserPage> {
         trailing: IconButton(
           icon: const Icon(Icons.remove_red_eye, color: Colors.white),
           onPressed: () {
-            // Voir le profil de l'utilisateur
+            selectedUserNotifier.selectUser(user);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const UserDetailPage(),
+              ),
+            );
           },
         ),
       ),

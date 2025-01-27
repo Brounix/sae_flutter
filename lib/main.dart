@@ -16,6 +16,7 @@ import 'domain/creation_notifier.dart';
 import 'domain/favorite_notifier.dart';
 import 'domain/followers_notifier.dart';
 import 'domain/neadry_user_notifier.dart';
+import 'domain/user_detail_notifier.dart';
 import 'firebase_options.dart';
 
 
@@ -51,6 +52,8 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => NearbyUsersNotifier(),
         ),
+        ChangeNotifierProvider(create: (_) => SelectedUserNotifier()),
+
       ],
       child: const MyApp(),
     ),
